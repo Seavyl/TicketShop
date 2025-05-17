@@ -2,37 +2,72 @@
 
 namespace App\Entity;
 
-use App\Repository\EventRepository;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\PositiveOrZero;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Annotation\Groups; // TRÈS IMPORTANT
+use App\Repository\EventRepository; // Assurez-vous que le nom du repository est correct
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['event:read']]), // Groupe spécifique à Contact
+        new GetCollection(normalizationContext: ['groups' => ['event:read']]),
+        new Post(denormalizationContext: ['groups' => ['event:write']]),
+        new Put(denormalizationContext: ['groups' => ['event:write']]) ,  // Opération PUT
+        new Delete(),
+    ],
+    normalizationContext: ['groups' => ['event:read']], // Groupe par défaut pour la lecture
+    denormalizationContext: ['groups' => ['event:write']] // Groupe par défaut pour l'écriture
+)]
 class Event
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['event:read'])] // L'ID est généralement en lecture seule
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['event:read', 'event:write'])] // Permettre la lecture et l'écriture pour title
+    #[NotBlank(groups: ['event:write'])]
     private ?string $title = null;
 
+    #[ORM\Column(length: 255, nullable: true)] // Si artist_name peut être null
+    #[Groups(['event:read', 'event:write'])]
+    private ?string $artistName = null; // Propriété en camelCase
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['event:read', 'event:write'])]
+    private ?\DateTimeInterface $startDate = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['event:read', 'event:write'])]
+    private ?\DateTimeInterface $endDate = null;
+
     #[ORM\Column(length: 255)]
-    private ?string $artist_name = null;
-
-    #[ORM\Column]
-    private ?\DateTime $start_date = null;
-
-    #[ORM\Column]
-    private ?\DateTime $end_date = null;
-
-    #[ORM\Column(length: 255)]
+    #[Groups(['event:read', 'event:write'])]
     private ?string $venue = null;
 
-    #[ORM\Column]
-    private ?int $price = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+#[Groups(['event:read', 'event:write'])]
+#[NotBlank(groups: ['event:write'])] // Obligatoire à l'écriture
+#[PositiveOrZero(message: "Le prix doit être positif ou nul.", groups: ['event:write'])]
+private ?string $price = null;
 
-    #[ORM\Column]
-    private ?int $remaining_quantity = null;
+    #[ORM\Column(type: Types::INTEGER)]
+    #[Groups(['event:read', 'event:write'])]
+    private ?int $remainingQuantity = null;
+
+    // --- Getters et Setters ---
+    // (Assurez-vous qu'ils sont tous présents)
 
     public function getId(): ?int
     {
@@ -47,43 +82,39 @@ class Event
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
     public function getArtistName(): ?string
     {
-        return $this->artist_name;
+        return $this->artistName;
     }
 
-    public function setArtistName(string $artist_name): static
+    public function setArtistName(?string $artistName): static
     {
-        $this->artist_name = $artist_name;
-
+        $this->artistName = $artistName;
         return $this;
     }
 
-    public function getStartDate(): ?\DateTime
+    public function getStartDate(): ?\DateTimeInterface
     {
-        return $this->start_date;
+        return $this->startDate;
     }
 
-    public function setStartDate(\DateTime $start_date): static
+    public function setStartDate(\DateTimeInterface $startDate): static
     {
-        $this->start_date = $start_date;
-
+        $this->startDate = $startDate;
         return $this;
     }
 
-    public function getEndDate(): ?\DateTime
+    public function getEndDate(): ?\DateTimeInterface
     {
-        return $this->end_date;
+        return $this->endDate;
     }
 
-    public function setEndDate(\DateTime $end_date): static
+    public function setEndDate(\DateTimeInterface $endDate): static
     {
-        $this->end_date = $end_date;
-
+        $this->endDate = $endDate;
         return $this;
     }
 
@@ -95,31 +126,28 @@ class Event
     public function setVenue(string $venue): static
     {
         $this->venue = $venue;
-
         return $this;
     }
 
-    public function getPrice(): ?int
+    public function getPrice(): ?string
     {
         return $this->price;
     }
 
-    public function setPrice(int $price): static
+    public function setPrice(string $price): static
     {
         $this->price = $price;
-
         return $this;
     }
 
     public function getRemainingQuantity(): ?int
     {
-        return $this->remaining_quantity;
+        return $this->remainingQuantity;
     }
 
-    public function setRemainingQuantity(int $remaining_quantity): static
+    public function setRemainingQuantity(int $remainingQuantity): static
     {
-        $this->remaining_quantity = $remaining_quantity;
-
+        $this->remainingQuantity = $remainingQuantity;
         return $this;
     }
 }
