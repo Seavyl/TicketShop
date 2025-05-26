@@ -19,7 +19,7 @@ class Order
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private ?string $total_amount = null;
 
     #[ORM\Column]
@@ -38,8 +38,8 @@ class Order
     /**
      * @var Collection<int, OrderItem>
      */
-    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'relatedOrder', orphanRemoval: true)]
-    private Collection $OrderItems;
+    //#[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'relatedOrder', orphanRemoval: true)]
+    //private Collection $OrderItems;
 
     public function __construct()
     {
@@ -110,9 +110,9 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection<int, OrderItem>
-     */
+    /*
+    @return Collection<int, OrderItem>
+     
     public function getOrderItems(): Collection
     {
         return $this->OrderItems;
@@ -138,5 +138,5 @@ class Order
         }
 
         return $this;
-    }
+    }*/
 }
