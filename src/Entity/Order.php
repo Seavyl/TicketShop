@@ -2,16 +2,29 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\OrderRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\OrderRepository;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
+#[ApiResource(
+    operations:[
+        new GetCollection(), 
+        new Get(),
+        new Post(),
+        new Put(),
+        new Delete(),
+    ]
+)]
 #[ORM\Table(name: '`order`')]
-#[ApiResource]
 class Order
 {
     #[ORM\Id]
@@ -20,31 +33,25 @@ class Order
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private ?string $total_amount = null;
+    private ?string $totalAmount = null;
 
     #[ORM\Column]
-    private ?\DateTime $create_at = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'User')]
+    #[ORM\ManyToOne(inversedBy: 'user')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?self $user = null;
-
-    /**
-     * @var Collection<int, self>
-     */
-    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $User;
+    private ?User $user = null;
 
     /**
      * @var Collection<int, OrderItem>
      */
-    //#[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'relatedOrder', orphanRemoval: true)]
-    //private Collection $OrderItems;
+    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'relatedOrder', orphanRemoval: true, cascade: ['persist', 'remove'])]
+    private Collection $orderItem;
 
     public function __construct()
     {
-        $this->User = new ArrayCollection();
-        $this->OrderItems = new ArrayCollection();
+        $this->orderItem = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -54,74 +61,52 @@ class Order
 
     public function getTotalAmount(): ?string
     {
-        return $this->total_amount;
+        return $this->totalAmount;
     }
 
-    public function setTotalAmount(string $total_amount): static
+    public function setTotalAmount(string $totalAmount): static
     {
-        $this->total_amount = $total_amount;
+        $this->totalAmount = $totalAmount;
 
         return $this;
     }
 
-    public function getCreateAt(): ?\DateTime
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->create_at;
+        return $this->createdAt;
     }
 
-    public function setCreateAt(\DateTime $create_at): static
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
-        $this->create_at = $create_at;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getUser(): ?self
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
-    public function setUser(?self $user): static
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 
         return $this;
     }
 
-    public function addUser(self $user): static
+    /**
+     * @return Collection<int, OrderItem>
+     */
+    public function getOrderItem(): Collection
     {
-        if (!$this->User->contains($user)) {
-            $this->User->add($user);
-            $user->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUser(self $user): static
-    {
-        if ($this->User->removeElement($user)) {
-            // set the owning side to null (unless already changed)
-            if ($user->getUser() === $this) {
-                $user->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /*
-    @return Collection<int, OrderItem>
-     
-    public function getOrderItems(): Collection
-    {
-        return $this->OrderItems;
+        return $this->orderItem;
     }
 
     public function addOrderItem(OrderItem $orderItem): static
     {
-        if (!$this->OrderItems->contains($orderItem)) {
-            $this->OrderItems->add($orderItem);
+        if (!$this->orderItem->contains($orderItem)) {
+            $this->orderItem->add($orderItem);
             $orderItem->setRelatedOrder($this);
         }
 
@@ -130,7 +115,7 @@ class Order
 
     public function removeOrderItem(OrderItem $orderItem): static
     {
-        if ($this->OrderItems->removeElement($orderItem)) {
+        if ($this->orderItem->removeElement($orderItem)) {
             // set the owning side to null (unless already changed)
             if ($orderItem->getRelatedOrder() === $this) {
                 $orderItem->setRelatedOrder(null);
@@ -138,5 +123,5 @@ class Order
         }
 
         return $this;
-    }*/
+    }
 }

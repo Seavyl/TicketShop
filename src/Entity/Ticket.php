@@ -2,11 +2,28 @@
 
 namespace App\Entity;
 
-use App\Repository\TicketRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\TicketRepository;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: TicketRepository::class)]
+#[ApiResource(
+    operations:[
+        new GetCollection(), 
+        new Get(),
+        new Post(),
+        new Put(),
+        new Delete(),
+    ]
+)]
 class Ticket
 {
     #[ORM\Id]
@@ -31,6 +48,17 @@ class Ticket
 
     #[ORM\Column]
     private ?int $remainingQuantity = null;
+
+    /**
+     * @var Collection<int, OrderItem>
+     */
+    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'ticket', orphanRemoval: true)]
+    private Collection $orderItems;
+
+    public function __construct()
+    {
+        $this->orderItems = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -105,6 +133,36 @@ class Ticket
     public function setRemainingQuantity(int $remainingQuantity): static
     {
         $this->remainingQuantity = $remainingQuantity;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderItem>
+     */
+    public function getOrderItems(): Collection
+    {
+        return $this->orderItems;
+    }
+
+    public function addOrderItem(OrderItem $orderItem): static
+    {
+        if (!$this->orderItems->contains($orderItem)) {
+            $this->orderItems->add($orderItem);
+            $orderItem->setTicket($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderItem(OrderItem $orderItem): static
+    {
+        if ($this->orderItems->removeElement($orderItem)) {
+            // set the owning side to null (unless already changed)
+            if ($orderItem->getTicket() === $this) {
+                $orderItem->setTicket(null);
+            }
+        }
 
         return $this;
     }

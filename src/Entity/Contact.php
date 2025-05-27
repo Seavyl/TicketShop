@@ -2,11 +2,26 @@
 
 namespace App\Entity;
 
-use App\Repository\ContactRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\ContactRepository;
+use ApiPlatform\Metadata\GetCollection;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
+#[ApiResource(
+    operations:[
+        new GetCollection(), 
+        new Get(),
+        new Post(),
+        new Put(),
+        new Delete(),
+    ]
+)]
 class Contact
 {
     #[ORM\Id]

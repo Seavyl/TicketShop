@@ -2,10 +2,25 @@
 
 namespace App\Entity;
 
-use App\Repository\CategoryRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Repository\CategoryRepository;
+use ApiPlatform\Metadata\GetCollection;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[ApiResource(
+    operations:[
+        new GetCollection(), 
+        new Get(),
+        new Post(),
+        new Put(),
+        new Delete(),
+    ]
+)]
 class Category
 {
     #[ORM\Id]
