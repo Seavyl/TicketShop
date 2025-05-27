@@ -13,39 +13,53 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: OrderRepository::class)]
+
+#[ORM\Entity]
+#[ORM\Table(name: '`order`')]
 #[ApiResource(
-    operations:[
-        new GetCollection(), 
-        new Get(),
-        new Post(),
-        new Put(),
-        new Delete(),
+    normalizationContext: ['groups' => ['order:read']],
+    denormalizationContext: ['groups' => ['order:write']],
+    operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_ADMIN')"
+        ),
+        new Get(
+            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Put(
+            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
+        ),
+        new Delete(
+            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
+        )
     ]
 )]
-#[ORM\Table(name: '`order`')]
 class Order
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
+    #[Groups(['order:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[ORM\Column(type: Types::DECIMAL, precision:10, scale:2)]
+    #[Groups(['order:read','order:write'])]
     private ?string $totalAmount = null;
 
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'user')]
+    #[ORM\ManyToOne(inversedBy: 'orderItem')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['order:read','order:write'])]
     private ?User $user = null;
 
-    /**
-     * @var Collection<int, OrderItem>
-     */
-    #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'relatedOrder', orphanRemoval: true, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'relatedOrder', targetEntity: OrderItem::class, cascade: ['persist','remove'])]
+    #[Groups(['order:read','order:write'])]
     private Collection $orderItem;
 
     public function __construct()

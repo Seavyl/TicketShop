@@ -11,31 +11,42 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ContactRepository;
 use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: ContactRepository::class)]
+
+#[ORM\Entity]
 #[ApiResource(
-    operations:[
-        new GetCollection(), 
-        new Get(),
-        new Post(),
-        new Put(),
-        new Delete(),
+    normalizationContext: ['groups' => ['contact:read']],
+    denormalizationContext: ['groups' => ['contact:write']],
+    operations: [
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new Get(security: "is_granted('ROLE_ADMIN')"),
+        new Post(),                                         // ouvert à tous
+        new Put(security: "is_granted('ROLE_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_ADMIN')")
     ]
 )]
 class Contact
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
+    #[Groups(['contact:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length:255)]
+    #[Groups(['contact:read','contact:write'])]
+    #[Assert\NotBlank]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length:255)]
+    #[Groups(['contact:read','contact:write'])]
+    #[Assert\NotBlank, Assert\Email]
     private ?string $email = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: 'text')]
+    #[Groups(['contact:read','contact:write'])]
+    #[Assert\NotBlank]
     private ?string $message = null;
 
     public function getId(): ?int

@@ -10,26 +10,36 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CategoryRepository;
 use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[ORM\Entity]
 #[ApiResource(
-    operations:[
-        new GetCollection(), 
-        new Get(),
-        new Post(),
-        new Put(),
-        new Delete(),
+    // Contexte de (dé)sérialisation global
+    normalizationContext: ['groups' => ['category:read']],
+    denormalizationContext: ['groups' => ['category:write']],
+    operations: [
+        new GetCollection(),                                   // accessible à tous
+        new Get(),                                             // accessible à tous
+        new Post(security: "is_granted('ROLE_ADMIN')"),        // seuls les ADMIN
+        new Put(security: "is_granted('ROLE_ADMIN')"),         
+        new Delete(security: "is_granted('ROLE_ADMIN')")
     ]
 )]
 class Category
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
+    #[Groups(['category:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length:255, unique:true)]
+    #[Groups(['category:read','category:write'])]
     private ?string $name = null;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
     
     public function getName(): ?string
     {
