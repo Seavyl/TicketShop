@@ -17,16 +17,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity]
-#[ORM\Table(name: '`order`')]
+#[ORM\Table(name: "orders")]
 #[ApiResource(
     normalizationContext: ['groups' => ['order:read']],
     denormalizationContext: ['groups' => ['order:write']],
     operations: [
         new GetCollection(
-            security: "is_granted('ROLE_ADMIN')"
+            security:"is_granted('PUBLIC_ACCESS')"
         ),
         new Get(
-            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
+            security: "is_granted('PUBLIC_ACCESS')"
         ),
         new Post(
             security: "is_granted('ROLE_USER')"

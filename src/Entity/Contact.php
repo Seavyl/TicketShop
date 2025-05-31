@@ -21,7 +21,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     normalizationContext: ['groups' => ['contact:read']],
     denormalizationContext: ['groups' => ['contact:write']],
     operations: [
-        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new GetCollection(security: "is_granted('PUBLIC_ACCESS')"),
         new Get(security: "is_granted('ROLE_ADMIN')"),
         new Post(),                                         // ouvert à tous
         new Put(security: "is_granted('ROLE_ADMIN')"),
