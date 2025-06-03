@@ -63,6 +63,11 @@ class Ticket
     #[Groups(['ticket:read'])]
     private Collection $orderItems;
 
+    // Dans Ticket.php
+    #[ORM\ManyToOne(inversedBy: 'tickets')]
+    #[Groups(['ticket:read'])] // Pour inclure l'objet Category lors de la lecture d'un Ticket
+    private ?Category $category = null;
+
     public function __construct()
     {
         $this->orderItems = new ArrayCollection();
@@ -176,4 +181,22 @@ class Ticket
 
         return $this;
     }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): static
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+    public function __toString(): string
+{
+    
+    return $this->getArtistName() ?? 'Ticket inconnu';
+  
+}
 }

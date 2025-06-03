@@ -22,21 +22,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
     normalizationContext: ['groups' => ['order:read']],
     denormalizationContext: ['groups' => ['order:write']],
     operations: [
-        new GetCollection(
-            security:"is_granted('PUBLIC_ACCESS')"
-        ),
-        new Get(
-            security: "is_granted('PUBLIC_ACCESS')"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')"
-        ),
-        new Put(
-            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
-        ),
-        new Delete(
-            security: "is_granted('ROLE_ADMIN') or object.getUser() == user"
-        )
+        new GetCollection(security:"is_granted('ROLE_ADMIN')"),
+        new Post(security: "is_granted('ROLE_USER')"),
+        new Put(security: "is_granted('ROLE_ADMIN') or object.getUser() == user"),
+        new Delete(security: "is_granted('ROLE_ADMIN') or object.getUser() == user")
     ]
 )]
 class Order

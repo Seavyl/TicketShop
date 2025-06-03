@@ -3,17 +3,19 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Repository\UserRepository;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
@@ -27,7 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Delete(security: "is_granted('ROLE_ADMIN') or object == user")
     ]
 )]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id, ORM\GeneratedValue, ORM\Column]
     #[Groups(['user:read'])]
@@ -44,19 +46,26 @@ class User
     #[Assert\Email(message: "L'email '{{ value }}' n'est pas un email valide.")]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['user:write'])]
-    #[Assert\NotBlank(message: 'Le mot de passe est requis.')]
+  /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
     private ?string $password = null;
+
+    /**
+     * @var string|null Le mot de passe en clair, utilisé uniquement pour le formulaire.
+     * NE PAS PERSISTER EN BASE DE DONNÉES.
+     */
+    #[Assert\Length(min: 6, minMessage: "Votre mot de passe doit comporter au moins {{ 6 }} caractères")]
+    #[Assert\NotCompromisedPassword] // Nécessite symfony/validator >= 5.2 et symfony/http-client
+    private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['user:read','user:write'])]
     #[Assert\NotBlank(message: "L'adresse est requise.")]
     private ?string $address = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['user:read','user:write'])]
-    #[Assert\NotBlank(message: 'Le rôle est requis.')]
+    #[ORM\Column] 
     private ?string $role = null;
 
     #[ORM\OneToMany(
@@ -99,7 +108,10 @@ class User
         return $this;
     }
 
-    public function getPassword(): ?string
+   /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
     {
         return $this->password;
     }
@@ -109,6 +121,29 @@ class User
         $this->password = $password;
         return $this;
     }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+        // Si un mot de passe en clair est défini, il est probable qu'il doive être haché.
+        // Le hachage lui-même sera géré par un listener ou dans le contrôleur avant la persistance.
+        return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials(): void
+    {
+        // Si vous stockez des données temporaires sensibles sur l'utilisateur, effacez-les ici
+        $this->plainPassword = null;
+    }
+
 
     public function getAddress(): ?string
     {
@@ -121,16 +156,7 @@ class User
         return $this;
     }
 
-    public function getRole(): ?string
-    {
-        return $this->role;
-    }
-
-    public function setRole(string $role): static
-    {
-        $this->role = $role;
-        return $this;
-    }
+    
 
     /**
      * @return Collection<int, Order>
@@ -157,5 +183,13 @@ class User
             }
         }
         return $this;
+    }
+    public function __toString(): string
+    {
+        return $this->name ?? $this->email ?? 'Utilisateur inconnu'; // Priorité au nom, sinon email
+    }
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email; // Ou $this->name si c'est l'identifiant unique
     }
 }

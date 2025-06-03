@@ -1,51 +1,33 @@
 # config/packages/security.yaml
 security:
+    # enable_authenticator_manager: true # Supprimé si Symfony < 5.1
 
-  password_hashers:
-    App\Entity\User: { algorithm: auto }
+    password_hashers:
+        App\Entity\User: { algorithm: auto }
 
-  providers:
-    app_user_provider:
-      entity:
-        class: App\Entity\User
-        property: email
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email # Ou la propriété que vous utilisez pour le login (ex: username)
 
-  firewalls:
-    # Dev tools
-    dev:
-      pattern: ^/api
-      security: false
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
 
-    # 1) JSON-login pour récupérer le JWT
-    login:
-      pattern:   ^/api/login$
-      stateless: true
-      json_login:
-        check_path:        /api/login
-        username_path:     email
-        password_path:     password
-        success_handler:   lexik_jwt_authentication.handler.authentication_success
-        failure_handler:   lexik_jwt_authentication.handler.authentication_failure
-
-    # 2) Firewall JWT pour toutes les autres requêtes /api
-    api:
-      pattern:   ^/api
-      stateless: true
-      provider:  app_user_provider
-    #w  jwt:       ~
-
-    # 3) Votre « site » classique (form_login, session, etc.)
-    main:
-      # on ne met **pas** pattern: ^/ ici, ou alors on l’exclut comme ci-dessous
-      # pattern: ^/(?!api)   # Symfony 5+ permet les Regex Lookahead
-      lazy:      true
-      provider:  app_user_provider
-      form_login:
-        login_path: /login
-        check_path: /login
-      logout: true
-
-  access_control:
-    - { path: ^/api/login$, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-    - { path: ^/api,        roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/admin,      roles: ROLE_ADMIN }
+        login_api: # Pour votre API React
+            pattern:   ^/api/login$
+            stateless: true
+            # Si Symfony < 5.1, vous utiliserez 'guard' ici, sinon 'json_login'
+            # Exemple avec json_login (Symfony 5.1+)
+            json_login:
+                check_path:        /api/login # Ou un autre nom comme /api/login_check
+                username_path:     email
+                password_path:     password
+                success_handler:   lexik_jwt_authentication.handler.authentication_success
+                failure_handler:   lexik_jwt_authentication.handler.authentication_failure
+            # Exemple avec guard (Symfony < 5.1)
+            # guard:
+            #    authenticators:
+            #        - App\Security\ApiLoginAuthenticator #

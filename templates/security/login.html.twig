@@ -1,0 +1,48 @@
+{# templates/security/login.html.twig #}
+{% extends 'base.html.twig' %} {# Adaptez si vous avez un autre layout de base ou pas de layout #}
+
+{% block title %}Connexion - Administration{% endblock %}
+
+{% block body %}
+<div style="width: 100%; max-width: 330px; padding: 15px; margin: auto; text-align: center;">
+    <form method="post">
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        {% if app.user %}
+            <div class="mb-3">
+                Vous êtes connecté en tant que {{ app.user.userIdentifier }}.
+                <a href="{{ path('app_logout') }}">Déconnexion</a>
+            </div>
+        {% else %}
+            <h1 class="h3 mb-3 font-weight-normal">Accès Administration</h1>
+
+            <label for="inputUsername" class="visually-hidden">Email (ou identifiant)</label>
+            <input type="text" value="{{ last_username }}" name="email" id="inputUsername" class="form-control mb-2" placeholder="Email ou identifiant" autocomplete="username" required autofocus>
+            
+            <label for="inputPassword" class="visually-hidden">Mot de passe</label>
+            <input type="password" name="password" id="inputPassword" class="form-control mb-3" placeholder="Mot de passe" autocomplete="current-password" required>
+
+            {# Le nom du champ CSRF doit être _csrf_token et son ID 'authenticate' par défaut #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            {#
+            Si vous activez "remember_me" dans security.yaml :
+            <div class="checkbox mb-3">
+                <label>
+                    <input type="checkbox" name="_remember_me"> Se souvenir de moi
+                </label>
+            </div>
+            #}
+
+            <button class="btn btn-lg btn-primary w-100" type="submit">
+                Se connecter
+            </button>
+        {% endif %}
+        <p class="mt-5 mb-3 text-muted">&copy; {{ "now"|date("Y") }}</p>
+    </form>
+</div>
+{% endblock %}

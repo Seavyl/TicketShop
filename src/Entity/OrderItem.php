@@ -19,21 +19,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
     normalizationContext: ['groups' => ['orderItem:read']],
     denormalizationContext: ['groups' => ['orderItem:write']],
     operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_ADMIN')"
-        ),
-        new Get(
-            security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"
-        ),
-        new Post(
-            security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"
-        ),
-        new Put(
-            security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"
-        ),
-        new Delete(
-            security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"
-        )
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new Get(security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"),
+        new Post(security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"),
+        new Put(security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user"),
+        new Delete(security: "is_granted('ROLE_ADMIN') or object.getRelatedOrder().getUser() == user")
     ]
 )]
 class OrderItem
