@@ -1,13 +1,9 @@
 # config/packages/nelmio_cors.yaml
 nelmio_cors:
-  defaults:
-    allow_origin: ['*']         # ou liste d’origines autorisées
-    allow_headers: ['*']
-    allow_methods: ['GET','POST','PUT','DELETE','OPTIONS']
-    max_age: 3600
-  paths:
-    '^/api/':                  # activer pour vos routes API
-      allow_origin: ['*']
-      allow_headers: ['*']
-      allow_methods: ['GET','POST','PUT','DELETE','OPTIONS']
-      max_age: 3600
+    defaults:
+        allow_origin: ['http://localhost:3000'] # votre React dev
+        allow_headers: ['Content-Type', 'Authorization']
+        allow_methods: ['GET','POST','PUT','DELETE','OPTIONS']
+        max_age: 3600
+    paths:
+        '^/api/': null

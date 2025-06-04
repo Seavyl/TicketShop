@@ -1,33 +1,59 @@
 # config/packages/security.yaml
 security:
-    # enable_authenticator_manager: true # Supprimé si Symfony < 5.1
+  enable_authenticator_manager: true
 
-    password_hashers:
-        App\Entity\User: { algorithm: auto }
+  # 1) Comment vous hasherez les mots de passe
+  password_hashers:
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
-    providers:
-        app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email # Ou la propriété que vous utilisez pour le login (ex: username)
+  # 2) D’où vient votre User (ici entité App\Entity\User identifiée par email)
+  providers:
+    app_user_provider:
+      entity:
+        class: App\Entity\User
+        property: email
 
-    firewalls:
-        dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
+  # 3) Configuration des différents firewalls
+  firewalls:
+    # désactivez la sécurité pour le profiler et les assets
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
 
-        login_api: # Pour votre API React
-            pattern:   ^/api/login$
-            stateless: true
-            # Si Symfony < 5.1, vous utiliserez 'guard' ici, sinon 'json_login'
-            # Exemple avec json_login (Symfony 5.1+)
-            json_login:
-                check_path:        /api/login # Ou un autre nom comme /api/login_check
-                username_path:     email
-                password_path:     password
-                success_handler:   lexik_jwt_authentication.handler.authentication_success
-                failure_handler:   lexik_jwt_authentication.handler.authentication_failure
-            # Exemple avec guard (Symfony < 5.1)
-            # guard:
-            #    authenticators:
-            #        - App\Security\ApiLoginAuthenticator #
+    # firewall pour l'API login (JSON login)
+    login:
+      pattern: ^/api/login$
+      stateless: true
+      json_login:
+        check_path:               /api/login
+        username_path:            email
+        password_path:            password
+        success_handler:          lexik_jwt_authentication.handler.authentication_success
+        failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+
+    # firewall pour toute l'API
+    api:
+      pattern:   ^/api
+      stateless: true
+      # on utilise le JWT authenticator fourni par LexikJWT
+      # (assurez-vous d’avoir lexik_jwt_authentication.yaml sous config/packages)
+      jwt: ~
+
+    # firewall “web” classique pour le back-office
+    main:
+      pattern: ^/
+      provider: app_user_provider
+      # par défaut, Symfony 6 autorise anonymous si aucune règle n’interdit
+      # ajoutez form_login / logout si vous le souhaitez
+      lazy: true
+
+  # 4) Qui peut accéder à quoi
+  access_control:
+    # login ouvert à tous
+    - { path: '^/api/login$',       roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    # contacts (GET + POST) ouverts à tous
+    - { path: '^/api/contacts',     roles: IS_AUTHENTICATED_ANONYMOUSLY }
+    # tout le reste de l’API (/api/xxx) nécessite un JWT
+    - { path: '^/api',              roles: IS_AUTHENTICATED_FULLY }
+    # back-office réservé aux admins
+    - { path: '^/admin',            roles: ROLE_ADMIN }

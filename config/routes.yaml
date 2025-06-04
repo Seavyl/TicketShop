@@ -1,10 +1,4 @@
+# config/routes.yaml
 controllers:
-    resource:
-        path: ../src/Controller/
-        namespace: App\Controller
-    type: attribute
-# config/routes/api_login.yaml
-api_login:
-  path: /api/login
-  methods: [POST]
-
+  resource: '../src/Controller/'
+  type: attribute

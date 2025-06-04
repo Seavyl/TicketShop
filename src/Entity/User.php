@@ -29,7 +29,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
         new Delete(security: "is_granted('ROLE_ADMIN') or object == user")
     ]
 )]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User 
 {
     #[ORM\Id, ORM\GeneratedValue, ORM\Column]
     #[Groups(['user:read'])]

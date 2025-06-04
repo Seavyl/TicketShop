@@ -1,7 +1,9 @@
+# config/packages/api_platform.yaml
 api_platform:
-    title: Hello API Platform
-    version: 1.0.0
-    defaults:
-        stateless: true
-        cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
+  formats:
+    # on ne garde que JSON « classique »
+    json:
+      mime_types: ['application/json']
+  mapping:
+    paths: ['%kernel.project_dir%/src/Entity']
+  # … vos autres options (pagination, swagger, etc.)
