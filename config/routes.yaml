@@ -2,3 +2,17 @@
 controllers:
   resource: '../src/Controller/'
   type: attribute
+
+root_redirect:
+  path: /
+  controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+  defaults:
+    path: /api  # ou /api/docs, ou /login, ou vers votre front React
+    permanent: false
+
+api_login_check:
+  path: /api/login
+
+api_refresh_token:
+  path: /api/token/refresh
+  controller: lexik_jwt_authentication.controller.refresh_token

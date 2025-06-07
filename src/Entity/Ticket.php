@@ -196,7 +196,7 @@ class Ticket
     public function __toString(): string
 {
     
-    return $this->getArtistName() ?? 'Ticket inconnu';
+    return $this->getArtistName() ?? 'Not known Ticket';
   
 }
 }

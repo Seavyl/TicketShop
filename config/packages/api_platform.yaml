@@ -1,9 +1,7 @@
-# config/packages/api_platform.yaml
 api_platform:
-  formats:
-    # on ne garde que JSON « classique »
-    json:
-      mime_types: ['application/json']
   mapping:
     paths: ['%kernel.project_dir%/src/Entity']
-  # … vos autres options (pagination, swagger, etc.)
+  formats:
+    json:   ['application/json']
+    jsonld: ['application/ld+json']
+    html:   ['text/html']

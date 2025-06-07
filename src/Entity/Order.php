@@ -19,14 +19,15 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity]
 #[ORM\Table(name: "orders")]
 #[ApiResource(
-    normalizationContext: ['groups' => ['order:read']],
-    denormalizationContext: ['groups' => ['order:write']],
-    operations: [
-        new GetCollection(security:"is_granted('ROLE_ADMIN')"),
-        new Post(security: "is_granted('ROLE_USER')"),
-        new Put(security: "is_granted('ROLE_ADMIN') or object.getUser() == user"),
-        new Delete(security: "is_granted('ROLE_ADMIN') or object.getUser() == user")
-    ]
+operations: [
+    new GetCollection(security: "is_granted('ROLE_USER')"),
+    new Get(           security: "is_granted('ROLE_USER')"),  // ← lecture d’un item
+    new Post(          security: "is_granted('ROLE_USER')"),
+    new Put(           security: "is_granted('ROLE_ADMIN')"),
+    new Delete(        security: "is_granted('ROLE_ADMIN')"),
+  ],
+  normalizationContext:   ['groups'=>['order:read']],
+  denormalizationContext: ['groups'=>['order:write']],
 )]
 class Order
 {
@@ -42,7 +43,7 @@ class Order
     #[Groups(['order:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'orderItem')]
+    #[ORM\ManyToOne(inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['order:read','order:write'])]
     private ?User $user = null;

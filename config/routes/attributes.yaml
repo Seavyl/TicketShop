@@ -1,0 +1,6 @@
+# config/routes/attributes.yaml
+controllers:
+  # on parcourt tout le dossier src/Controller pour y trouver
+  # les classes marquées #[Route(...)] 
+  resource: ../../src/Controller/
+  type: attribute

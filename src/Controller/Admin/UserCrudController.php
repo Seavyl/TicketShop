@@ -1,15 +1,17 @@
 <?php
+// src/Controller/Admin/UserCrudController.php
 
 namespace App\Controller\Admin;
 
 use App\Entity\User;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 
 class UserCrudController extends AbstractCrudController
 {
@@ -18,34 +20,34 @@ class UserCrudController extends AbstractCrudController
         return User::class;
     }
 
-    
     public function configureFields(string $pageName): iterable
     {
-        return [
+        // 1) définition des champs communs
+        $fields = [
             IdField::new('id')->hideOnForm(),
-            TextField::new('name'),
-            EmailField::new('email'),
-            TextField::new('address'),
-            ChoiceField::new('role','choice user or admin')
+            TextField::new('name', 'Nom'),
+            EmailField::new('email', 'Email'),
+            TextField::new('address', 'Adresse'),
+            ChoiceField::new('roles', 'Roles')
                 ->setChoices([
-                    'user'=> 'user',
-                    'admin'=> 'admin'
+                    'User'  => 'ROLE_USER',
+                    'Admin' => 'ROLE_ADMIN',
                 ])
+                ->allowMultipleChoices()
+                ->renderExpanded(),
+            AssociationField::new('orders')
+                ->onlyOnDetail(),
         ];
 
-    
-
-        if ($pageName === Crud::PAGE_NEW || $pageName === Crud::PAGE_EDIT) {
-            // Ajoutez les champs conditionnels au tableau $fields
+        // 2) champ mot de passe uniquement sur création & édition
+        if (Crud::PAGE_NEW === $pageName || Crud::PAGE_EDIT === $pageName) {
             $fields[] = TextField::new('plainPassword', 'Mot de passe')
                 ->setFormType(PasswordType::class)
-                ->setRequired($pageName === Crud::PAGE_NEW)
-                ->setHelp('Laissez vide pour ne pas changer.')
+                ->setRequired(Crud::PAGE_NEW === $pageName)
+                ->setHelp('Laissez vide pour conserver l\'ancien mot de passe.')
                 ->onlyOnForms();
+        }
 
-            
-
-        return $fields; // Retournez le tableau complet des champs
+        return $fields;
     }
-}
 }

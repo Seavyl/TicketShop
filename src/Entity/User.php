@@ -2,76 +2,80 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Delete;
-use Doctrine\ORM\Mapping as ORM;
-use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ApiResource(
-    normalizationContext: ['groups' => ['user:read']],
-    denormalizationContext: ['groups' => ['user:write']],
-    operations: [
-        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
-        new Get(security: "is_granted('ROLE_ADMIN') or object == user"),
-        new Post(),  // inscription ouverte
-        new Put(security: "is_granted('ROLE_ADMIN') or object == user"),
-        new Delete(security: "is_granted('ROLE_ADMIN') or object == user")
-    ]
+  normalizationContext: ['groups' => ['user:read']],
+  denormalizationContext: ['groups' => ['user:write']],
+  operations: [
+    new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+    new Get(security: "is_granted('ROLE_ADMIN') or object == user"),
+    new Post(),  // inscription ouverte
+    new Put(security: "is_granted('ROLE_ADMIN') or object == user"),
+    new Delete(security: "is_granted('ROLE_ADMIN') or object == user"),
+  ]
 )]
-class User 
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id, ORM\GeneratedValue, ORM\Column]
     #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read','user:write'])]
+    #[Groups(['user:read', 'user:write'])]
     #[Assert\NotBlank(message: 'Le nom est requis.')]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255, unique: true)]
-    #[Groups(['user:read','user:write'])]
-    #[Assert\NotBlank(message: "L'email est requis.")]
-    #[Assert\Email(message: "L'email '{{ value }}' n'est pas un email valide.")]
+    #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['user:read', 'user:write'])]
+    #[Assert\NotBlank(message: "Email is required.")]
+    #[Assert\Email(message: "Email '{{ value }}' is not valid.")]
     private ?string $email = null;
 
-  /**
-     * @var string The hashed password
+    /**
+     * Stocke un tableau de rôles, ex. ["ROLE_USER","ROLE_ADMIN"]
+     */
+    #[ORM\Column(type: 'json')]
+    #[Groups(['user:read', 'user:write'])]
+    private array $roles = [];
+
+    /**
+     * Le mot de passe hashé
      */
     #[ORM\Column]
     private ?string $password = null;
 
     /**
-     * @var string|null Le mot de passe en clair, utilisé uniquement pour le formulaire.
-     * NE PAS PERSISTER EN BASE DE DONNÉES.
+     * Mot de passe en clair (non persisté), utilisé pour la saisie
      */
-    #[Assert\Length(min: 6, minMessage: "Votre mot de passe doit comporter au moins {{ 6 }} caractères")]
-    #[Assert\NotCompromisedPassword] // Nécessite symfony/validator >= 5.2 et symfony/http-client
+    #[Groups(['user:write'])]
+    #[Assert\NotBlank(message: "Le mot de passe est requis")]
+    #[Assert\Length(min: 6, minMessage: "Le mot de passe doit faire au moins {{ limit }} caractères")]
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read','user:write'])]
-    #[Assert\NotBlank(message: "L'adresse est requise.")]
+    #[Groups(['user:read', 'user:write'])]
+    #[Assert\NotBlank(message: "Address is required.")]
     private ?string $address = null;
-
-    #[ORM\Column] 
-    private ?string $role = null;
 
     #[ORM\OneToMany(
         mappedBy: 'user',
         targetEntity: Order::class,
-        cascade: ['persist','remove']
+        cascade: ['persist', 'remove']
     )]
     #[Groups(['user:read'])]
     private Collection $orders;
@@ -79,6 +83,7 @@ class User
     public function __construct()
     {
         $this->orders = new ArrayCollection();
+        $this->roles = ['ROLE_USER'];
     }
 
     public function getId(): ?int
@@ -108,12 +113,38 @@ class User
         return $this;
     }
 
-   /**
+    /**
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        if (!in_array('ROLE_USER', $roles, true)) {
+            $roles[] = 'ROLE_USER';
+        }
+        return $roles;
+    }
+
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
+        return $this;
+    }
+
+    /**
      * @see PasswordAuthenticatedUserInterface
      */
     public function getPassword(): string
     {
-        return $this->password;
+        return (string) $this->password;
     }
 
     public function setPassword(string $password): static
@@ -130,20 +161,13 @@ class User
     public function setPlainPassword(?string $plainPassword): static
     {
         $this->plainPassword = $plainPassword;
-        // Si un mot de passe en clair est défini, il est probable qu'il doive être haché.
-        // Le hachage lui-même sera géré par un listener ou dans le contrôleur avant la persistance.
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function eraseCredentials(): void
     {
-        // Si vous stockez des données temporaires sensibles sur l'utilisateur, effacez-les ici
         $this->plainPassword = null;
     }
-
 
     public function getAddress(): ?string
     {
@@ -155,8 +179,6 @@ class User
         $this->address = $address;
         return $this;
     }
-
-    
 
     /**
      * @return Collection<int, Order>
@@ -184,12 +206,9 @@ class User
         }
         return $this;
     }
+
     public function __toString(): string
     {
-        return $this->name ?? $this->email ?? 'Utilisateur inconnu'; // Priorité au nom, sinon email
-    }
-    public function getUserIdentifier(): string
-    {
-        return (string) $this->email; // Ou $this->name si c'est l'identifiant unique
+        return $this->name ?? $this->email ?? 'User';
     }
 }
